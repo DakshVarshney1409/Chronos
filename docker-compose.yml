@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  # The Recorder Service
+  recorder:
+    build: .
+    container_name: chronos_recorder
+    volumes:
+      - ./data:/app/data
+    networks:
+      trading_net:
+        ipv4_address: 172.20.0.2
+
+  # Mock Exchange: A simple script could be added here to send UDP packets
+  exchange_emulator:
+    image: alpine
+    command: >
+      sh -c "apk add --no-cache socat && 
+             while true; do 
+               echo 'MOCK_MARKET_DATA_PACKET' | socat - UDP4-DATAGRAM:172.20.0.2:12345; 
+               sleep 0.001; 
+             done"
+    networks:
+      trading_net:
+        ipv4_address: 172.20.0.3
+
+networks:
+  trading_net:
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
